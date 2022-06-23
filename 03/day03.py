@@ -16,7 +16,7 @@ def part_b(input_data: str) -> int:
 
 
 if __name__ == '__main__':
-    puzzle = Puzzle(year=2021, day=03)
+    puzzle = Puzzle(year=2021, day=3)
 
     print(f"Puzzle {puzzle.year}-12-{puzzle.day:02d}: {puzzle.title}")
     print(f"  Part A: {part_a(puzzle.input_data)}")
