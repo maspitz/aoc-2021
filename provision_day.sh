@@ -25,5 +25,9 @@ mkdir $DAYNUM
 SEDCMD="s/DAY_NUMBER/${DAYNUM}/g"
 
 sed -e $SEDCMD templates/dayNN.py > "${DAYNUM}/day${DAYNUM}.py"
+
+# Avoid spurious octal literal by eliminating leading zero (if any).
+sed -i -e "s/, day=0/, day=/" "${DAYNUM}/day${DAYNUM}.py"
+
 sed -e $SEDCMD templates/_test_NN.py > "${DAYNUM}/test_${DAYNUM}.py"
 
