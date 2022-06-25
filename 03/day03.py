@@ -58,7 +58,30 @@ def part_b(input_data: str) -> int:
     bit_lists = [[bit for bit in line] for line in input_data.split()]
     bit_array = np.array(bit_lists, dtype=int)
 
-    return "Solution not implemented"
+
+    # these refer to the same object, but this is OK since it won't be mutated
+    oxy = bit_array
+    co2 = bit_array
+
+    # for each bit, in order, filter the rows of the oxy (co2) arrays
+    # based on most (least) common bits remaining.
+    for bit_idx in range(np.size(bit_array, 1)):
+        if np.size(oxy, 0) > 1:
+            oxy_mcb = most_common_bits(oxy)
+            oxy = oxy[oxy[:, bit_idx] == oxy_mcb[bit_idx]]
+        if np.size(co2, 0) > 1:
+            co2_lcb = 1 - most_common_bits(co2)
+            co2 = co2[co2[:, bit_idx] == co2_lcb[bit_idx]]
+
+    if np.size(oxy, 0) != 1:
+        raise ValueError("Oxygen generator rating is not unique")
+    if np.size(co2, 0) != 1:
+        raise ValueError("CO2 generator rating is not unique")
+
+    oxy_rating = bit_vector_to_int(oxy[0,:])
+    co2_rating = bit_vector_to_int(co2[0,:])
+
+    return oxy_rating * co2_rating
 
 
 if __name__ == '__main__':
