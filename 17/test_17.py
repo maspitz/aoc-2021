@@ -5,9 +5,9 @@ import day17
 # Test data given as a multiline string.
 sample_input_data = """target area: x=20..30, y=-10..-5"""
 
-sample_solution_a = "Sample solution not entered"
+sample_solution_a = 45
 
-sample_solution_b = "Sample solution not entered"
+sample_solution_b = 112
 
 
 def test_part_a():
