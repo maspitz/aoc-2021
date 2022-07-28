@@ -3,7 +3,7 @@
 import day17
 
 # Test data given as a multiline string.
-sample_input_data = """Sample data not entered"""
+sample_input_data = """target area: x=20..30, y=-10..-5"""
 
 sample_solution_a = "Sample solution not entered"
 
