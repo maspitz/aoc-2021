@@ -2,8 +2,6 @@
 
 from aocd.models import Puzzle
 
-from dataclasses import dataclass
-
 MAX_DEPTH = 5
 MAX_NODES = 2**(MAX_DEPTH+1) - 1
 
