@@ -2,8 +2,8 @@
 
 """
 In this solution, I leave the snailfish number in serialized (aka string)
-form except for the magnitude calculation.  The serialized form is
-more convenient than tree form for the split and explode operations anyway.
+form.  The serialized form is more convenient than tree form for the split
+and explode operations anyway.
 """
 
 
@@ -112,16 +112,22 @@ def reduce(s: str) -> str:
         break
     return s
 
+
 def magnitude(s: str) -> int:
     """Returns the magnitude of a snailfish number."""
 
-    def mag(l: list) -> int:
-        if type(l) == int:
-            return l
-        else:
-            return 3 * mag(l[0]) + 2 * mag(l[1])
+    if s[0] != '[':
+        return int(s)
+    d = 0
+    for i, c in enumerate(s):
+        if c == '[':
+            d += 1
+        elif c == ']':
+            d -= 1
+        elif c == ',' and d == 1:
+            return 3*magnitude(s[1:i]) + 2*magnitude(s[i+1:-1])
+    return -1
 
-    return mag(eval(s))
 
 def homework(data: str) -> int:
     """Returns the magnitude of a snailfish homework assignment."""
