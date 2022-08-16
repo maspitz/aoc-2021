@@ -14,7 +14,6 @@ Cuboid = namedtuple("Cuboid", "x1 x2 y1 y2 z1 z2")
 # into a state of "on" or "off".
 RebootStep = namedtuple("RebootStep", "state cuboid")
 
-
 def parse_reboot_step(line: str) -> RebootStep:
     """Returns a reboot step."""
     p = parse("{} x={:d}..{:d},y={:d}..{:d},z={:d}..{:d}", line)
@@ -82,71 +81,80 @@ def cuboids_overlap(a: Cuboid, b: Cuboid) -> bool:
                 a.y2 < b.y1 or b.y2 < a.y1 or
                 a.z2 < b.z1 or b.z2 < a.z1)
 
+
+def cuboid_intersection(a: Cuboid, b: Cuboid) -> Cuboid:
+    """Return the intersection of A and B."""
+    return Cuboid(max(a.x1, b.x1), min(a.x2, b.x2),
+                  max(a.y1, b.y1), min(a.y2, b.y2),
+                  max(a.z1, b.z1), min(a.z2, b.z2))
+
+
+def divide_range(u1: int, u2: int, v1: int, v2: int) -> tuple:
+    """Partition [u1, u2] based on intersection with [v1, v2]."""
+    if u1 < v1:
+        if u2 > v2:
+            return ((u1, v1 - 1), (v1, v2), (v2 + 1, u2))
+        else:
+            return ((u1, v1 - 1), (v1, v2))
+    elif u2 > v2:
+        return ((v1, v2), (v2 + 1, u2))
+    else:
+        return ((v1, v2),)
+
+
 def cuboid_difference(a: Cuboid, b: Cuboid) -> list:
     """Returns a list of cuboids containing all points in a and not b."""
 
-    # Let cuboid C be the intersection of A and B.
-
-    c = Cuboid(max(a.x1, b.x1), min(a.x2, b.x2),
-               max(a.y1, b.y1), min(a.y2, b.y2),
-               max(a.z1, b.z1), min(a.z2, b.z2))
-
+    c = cuboid_intersection(a, b)
+    
     # Partition A into 27 cuboids, including C.
 
-    partition_list = []
-            
-    def divide_range(a_1: int, a_2: int, c_1: int, c_2: int) -> tuple:
-        """Divide the [a_1, a_2] range into three pieces."""
-        return ((a.x1, c.x1 - 1), (c.x1, c.x2), (c.x2 + 1, a.x2))
+    xranges = divide_range(a.x1, a.x2, c.x1, c.x2)
+    yranges = divide_range(a.y1, a.y2, c.y1, c.y2)
+    zranges = divide_range(a.z1, a.z2, c.z1, c.z2)
 
-    xlo, xmid, xhi = divide_range(a.x1, a.x2, c.x1, c.x2)
-    ylo, ymid, yhi = divide_range(a.y1, a.y2, c.y1, c.y2)
-    zlo, zmid, zhi = divide_range(a.z1, a.z2, c.z1, c.z2)
+    cuboids = {Cuboid(*xrange, *yrange, *zrange)
+               for xrange in xranges
+               for yrange in yranges
+               for zrange in zranges}
 
-    def add_cuboid(d: Cuboid):
-        # Append non-empty cuboids to a list.
-        if (d.x1 <= d.x2 and
-            d.y1 <= d.y2 and
-            d.z1 <= d.z2):
-            partition_list.append(d)
+    return cuboids - {c}
 
-    # Add cuboids making up (A minus C) to the list
 
-    add_cuboid(Cuboid(*xlo, *ylo, *zlo))
-    add_cuboid(Cuboid(*xmid, *ylo, *zlo))
-    add_cuboid(Cuboid(*xhi, *ylo, *zlo))
-    add_cuboid(Cuboid(*xlo, *ymid, *zlo))
-    add_cuboid(Cuboid(*xmid, *ymid, *zlo))
-    add_cuboid(Cuboid(*xhi, *ymid, *zlo))
-    add_cuboid(Cuboid(*xlo, *yhi, *zlo))
-    add_cuboid(Cuboid(*xmid, *yhi, *zlo))
-    add_cuboid(Cuboid(*xhi, *yhi, *zlo))
-    add_cuboid(Cuboid(*xlo, *ylo, *zmid))
-    add_cuboid(Cuboid(*xmid, *ylo, *zmid))
-    add_cuboid(Cuboid(*xhi, *ylo, *zmid))
-    add_cuboid(Cuboid(*xlo, *ymid, *zmid))
-    # We do not add (*xmid, *ymid, *zmid) because that is C.
-    add_cuboid(Cuboid(*xhi, *ymid, *zmid))
-    add_cuboid(Cuboid(*xlo, *yhi, *zmid))
-    add_cuboid(Cuboid(*xmid, *yhi, *zmid))
-    add_cuboid(Cuboid(*xhi, *yhi, *zmid))
-    add_cuboid(Cuboid(*xlo, *ylo, *zhi))
-    add_cuboid(Cuboid(*xmid, *ylo, *zhi))
-    add_cuboid(Cuboid(*xhi, *ylo, *zhi))
-    add_cuboid(Cuboid(*xlo, *ymid, *zhi))
-    add_cuboid(Cuboid(*xmid, *ymid, *zhi))
-    add_cuboid(Cuboid(*xhi, *ymid, *zhi))
-    add_cuboid(Cuboid(*xlo, *yhi, *zhi))
-    add_cuboid(Cuboid(*xmid, *yhi, *zhi))
-    add_cuboid(Cuboid(*xhi, *yhi, *zhi))
-
-    return partition_list
+def cuboid_volume(a: Cuboid) -> int:
+    """Returns the number of points in a cuboid."""
+    return ((a.x2 - a.x1 + 1) *
+            (a.y2 - a.y1 + 1) *
+            (a.z2 - a.z1 + 1))
 
 
 def part_b(input_data: str) -> int:
     """Given the puzzle input data, return the solution for part B."""
 
-    return "Solution not implemented"
+    active = set()
+    # Loop invariant:
+    # active is a set of nonoverlapping cuboids which contain
+    # exactly those points which are currently turned on,
+    # considering all the steps processed up to that iteration.
+
+    for rbs in parse_input_data(input_data):
+        # Find the cuboids that overlap this reboot step's cuboid.
+        overlaps = {c for c in active
+                    if cuboids_overlap(c, rbs.cuboid)}
+
+        # Partition them into pieces excluding this step's cuboid.
+        overlap_differences = [cuboid_difference(o, rbs.cuboid)
+                               for o in overlaps]
+
+        # Replace the overlapping cuboids with the nonoverlapping pieces.
+        active -= overlaps
+        active = set.union(active, *overlap_differences)
+        
+        # If this step's cuboid turns points on, then include it.
+        if rbs.state == "on":
+            active |= {rbs.cuboid}
+
+    return sum(cuboid_volume(c) for c in active)
 
 
 if __name__ == '__main__':
