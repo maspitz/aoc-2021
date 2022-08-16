@@ -67,6 +67,82 @@ def part_a(input_data: str) -> int:
     return ir.total_cubes_on()
 
 
+def cuboids_overlap(a: Cuboid, b: Cuboid) -> bool:
+    """Returns True if the cuboids a and b overlap."""
+
+    # A cuboid includes all points within the product of its axis ranges.
+
+    # Hence the intersection of two cuboids is precisely the product of
+    # the intersections of their axis ranges.
+
+    # Thus, two cuboids overlap if and only if all of their axis ranges
+    # overlap.
+
+    return not (a.x2 < b.x1 or b.x2 < a.x1 or
+                a.y2 < b.y1 or b.y2 < a.y1 or
+                a.z2 < b.z1 or b.z2 < a.z1)
+
+def cuboid_difference(a: Cuboid, b: Cuboid) -> list:
+    """Returns a list of cuboids containing all points in a and not b."""
+
+    # Let cuboid C be the intersection of A and B.
+
+    c = Cuboid(max(a.x1, b.x1), min(a.x2, b.x2),
+               max(a.y1, b.y1), min(a.y2, b.y2),
+               max(a.z1, b.z1), min(a.z2, b.z2))
+
+    # Partition A into 27 cuboids, including C.
+
+    partition_list = []
+            
+    def divide_range(a_1: int, a_2: int, c_1: int, c_2: int) -> tuple:
+        """Divide the [a_1, a_2] range into three pieces."""
+        return ((a.x1, c.x1 - 1), (c.x1, c.x2), (c.x2 + 1, a.x2))
+
+    xlo, xmid, xhi = divide_range(a.x1, a.x2, c.x1, c.x2)
+    ylo, ymid, yhi = divide_range(a.y1, a.y2, c.y1, c.y2)
+    zlo, zmid, zhi = divide_range(a.z1, a.z2, c.z1, c.z2)
+
+    def add_cuboid(d: Cuboid):
+        # Append non-empty cuboids to a list.
+        if (d.x1 <= d.x2 and
+            d.y1 <= d.y2 and
+            d.z1 <= d.z2):
+            partition_list.append(d)
+
+    # Add cuboids making up (A minus C) to the list
+
+    add_cuboid(Cuboid(*xlo, *ylo, *zlo))
+    add_cuboid(Cuboid(*xmid, *ylo, *zlo))
+    add_cuboid(Cuboid(*xhi, *ylo, *zlo))
+    add_cuboid(Cuboid(*xlo, *ymid, *zlo))
+    add_cuboid(Cuboid(*xmid, *ymid, *zlo))
+    add_cuboid(Cuboid(*xhi, *ymid, *zlo))
+    add_cuboid(Cuboid(*xlo, *yhi, *zlo))
+    add_cuboid(Cuboid(*xmid, *yhi, *zlo))
+    add_cuboid(Cuboid(*xhi, *yhi, *zlo))
+    add_cuboid(Cuboid(*xlo, *ylo, *zmid))
+    add_cuboid(Cuboid(*xmid, *ylo, *zmid))
+    add_cuboid(Cuboid(*xhi, *ylo, *zmid))
+    add_cuboid(Cuboid(*xlo, *ymid, *zmid))
+    # We do not add (*xmid, *ymid, *zmid) because that is C.
+    add_cuboid(Cuboid(*xhi, *ymid, *zmid))
+    add_cuboid(Cuboid(*xlo, *yhi, *zmid))
+    add_cuboid(Cuboid(*xmid, *yhi, *zmid))
+    add_cuboid(Cuboid(*xhi, *yhi, *zmid))
+    add_cuboid(Cuboid(*xlo, *ylo, *zhi))
+    add_cuboid(Cuboid(*xmid, *ylo, *zhi))
+    add_cuboid(Cuboid(*xhi, *ylo, *zhi))
+    add_cuboid(Cuboid(*xlo, *ymid, *zhi))
+    add_cuboid(Cuboid(*xmid, *ymid, *zhi))
+    add_cuboid(Cuboid(*xhi, *ymid, *zhi))
+    add_cuboid(Cuboid(*xlo, *yhi, *zhi))
+    add_cuboid(Cuboid(*xmid, *yhi, *zhi))
+    add_cuboid(Cuboid(*xhi, *yhi, *zhi))
+
+    return partition_list
+
+
 def part_b(input_data: str) -> int:
     """Given the puzzle input data, return the solution for part B."""
 
