@@ -1,6 +1,10 @@
 """Solves day 22, Advent of Code 2021."""
 
 from aocd.models import Puzzle
+from parse import parse
+
+
+
 
 
 def part_a(input_data: str) -> int:
