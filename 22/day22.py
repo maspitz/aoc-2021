@@ -26,15 +26,45 @@ def parse_input_data(input_data: str) -> list:
     return [parse_reboot_step(line) for line in input_data.split('\n')]
 
 
-def make_init_region() -> np.array:
-    """Returns an initialization region."""
-    pass
+class InitRegion():
+    """Models a 50x50x50 initialization region."""
+
+    def __init__(self):
+        """Creates the initialization region."""
+        self.data = np.zeros((101,101,101), dtype=int)
+
+    def apply_step(self, r: RebootStep):
+        """Applies a reboot step."""
+        
+        # translate reactor-core-coord range to np.array range,
+        # keeping in mind that np.array range is x1 <= x < x2
+        x1 = max(r.cuboid.x1+50, 0)
+        x2 = min(r.cuboid.x2+51, 101)
+        y1 = max(r.cuboid.y1+50, 0)
+        y2 = min(r.cuboid.y2+51, 101)
+        z1 = max(r.cuboid.z1+50, 0)
+        z2 = min(r.cuboid.z2+51, 101)
+        if r.state == "on":
+            value = 1
+        elif r.state == "off":
+            value = 0
+        else:
+            raise ValueError(f"Unknown state: '{r.state}'")
+        self.data[x1:x2,y1:y2,z1:z2] = value
+        
+
+    def total_cubes_on(self) -> int:
+        """Returns the number of cubes that are currently on."""
+        return np.sum(self.data)
 
 
 def part_a(input_data: str) -> int:
     """Given the puzzle input data, return the solution for part A."""
 
-    return "Solution not implemented"
+    ir = InitRegion()
+    for step in parse_input_data(input_data):
+        ir.apply_step(step)
+    return ir.total_cubes_on()
 
 
 def part_b(input_data: str) -> int:
