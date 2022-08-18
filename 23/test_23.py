@@ -3,9 +3,13 @@
 import day23
 
 # Test data given as a multiline string.
-sample_input_data = """Sample data not entered"""
+sample_input_data = """#############
+#...........#
+###B#C#B#D###
+  #A#D#C#A#
+  #########"""
 
-sample_solution_a = "Sample solution not entered"
+sample_solution_a = 12521
 
 sample_solution_b = "Sample solution not entered"
 
@@ -15,6 +19,6 @@ def test_part_a():
     assert day23.part_a(sample_input_data) == sample_solution_a
 
 
-def test_part_b():
-    """Test the solution on sample data for part B."""
-    assert day23.part_b(sample_input_data) == sample_solution_b
+#def test_part_b():
+#    """Test the solution on sample data for part B."""
+#    assert day23.part_b(sample_input_data) == sample_solution_b
