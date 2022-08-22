@@ -61,194 +61,101 @@ def all_moves(s: State) -> list:
         if occupant == '.':
             continue
         room_number = DESTINATION_ROOM[occupant]
-        if not destination_ready(s, room_number):
+        room_state = s.room_states[room_number]
+        if not destination_ready(room_state, occupant):
             continue
-        path_clear, steps_to_room = path_to_room(s, hall_space, room_number)
+        path_clear, hall_steps = path_to_room(s.hall_state,
+                                              hall_space, room_number)
         if not path_clear:
             continue
+        new_hall_state = remove_from_hall(s.hall_state, hall_space)
+        new_room_state, room_steps = add_to_room(room_state, occupant)
+        new_room_states = (s.room_states[:room_number] +
+                           (new_room_state,) +
+                           s.room_states[room_number+1:])
+        new_state = State(new_hall_state, new_room_states)
+        move_cost = (hall_steps + room_steps) * STEP_COSTS[occupant]
+        moves.append((new_state, move_cost))
         
+    for room_number, room_state in enumerate(s.room_states):
+        pass  # FIXME
+    breakpoint()
+    return moves
 
 
-def destination_ready(s: State, room_number: int):
-    """Returns True if the room is ready for amphipods to enter it.
+def add_to_room(room_state: str, occupant: str) -> str:
+    """Returns a room state with new occupant added and number of steps."""
 
-    It is ready only if all the amphipods within it
-    have the room as their destination."""
-    
-    room_occupants = s.room_states[room_number]
-    return all(o == '.' or o == ROOM_ASSIGNMENT[room_number]
-               for o in room_occupants)
+    idx = room_state.rfind('.')
+    if idx == -1:
+        raise ValueError(f"Can't add {occupant=} to {room_state=}")
+    return (room_state[:idx] + occupant + room_state[idx+1:],
+            idx + 1)
 
+def remove_from_hall(hall_state: str, hall_space: int) -> str:
+    """Removes an amphipod from the hall."""
 
-def path_to_room(s: State, hall_space: int, room_number: int) -> tuple:
-    """Returns True and the number of steps to reach the room from the hall.
-
-    If the path is blocked, then returns (False, None)."""
-
-    # TODO complete function.
-    pass
+    return hall_state[:hall_space] + "." + hall_state[hall_space+1:]
 
 
-##### OLDER STUFF, DELETE WHAT'S OBSOLETE #####
-def paths_to_hall(state: str, room_space: int) -> list:
-    """Returns a list of possible destinations and costs for an amphipod.
+def destination_ready(room_state: str, occupant: str) -> bool:
+    """Returns True if the occupant can enter the destination room.
 
-    The list has the form: [(hall_space_1, cost_1), ...]"""
-    amphipod = state[room_space]
-    step_cost = STEP_COSTS[amphipod]
-    steps = 0
+    It is ready only if all the room's occupants are of the
+    proper destination occupant type."""
 
-    # first, step within the room if necessary
-    if room_space > 10:
-        if state[room_space - 4] != ".":
-            return []
-        room_space -= 4
-        steps = 1
+    return all(c == '.' or c == occupant for c in room_state)
 
-    dests = []
-        
-    # add hall locations reachable to the left
-    hall_left = room_space - 6
-    hall_left_steps = steps + 2
-    while hall_left >= 0 and state[hall_left] == ".":
-        dests.append((hall_left, hall_left_steps * step_cost))
-        if hall_left > 1:
-            hall_left_steps += 2
-        else:
-            hall_left_steps += 1
-        hall_left -= 1
+# alternative empty hall check:
+# EMPTY_HALL = "......."
 
-    # add hall locations reachable to the right
-    hall_right = room_space - 5
-    hall_right_steps = steps + 2
-    while hall_right <= 6 and state[hall_right] == ".":
-        dests.append((hall_right, hall_right_steps * step_cost))
-        if hall_right < 5:
-            hall_right_steps += 2
-        else:
-            hall_right_steps += 1
-        hall_right += 1
+def path_to_room(hall_state: str, hall_space: int, room_number: int) -> tuple:
+    """Returns True and the number of steps to reach the room.
 
-    return dests
-
-
-def cost_to_room(state: str, hall_space: int) -> tuple:
-    """Returns the room destination and cost for an amphipod in the hall.
-
-    The tuple has the form: (room_space, cost)
-    If the destination is blocked, then the cost is infinite (math.inf)."""
-
-    amphipod = state[hall_space]
-
-    # start with dest set to outer destination (nearer the hallway)
-    dest = DESTINATIONS[amphipod][0]
-
-    # set waypoint hallway destination
-    hall_dest = dest - 6
-    if hall_dest < hall_space:
-        hall_dest += 1
-
-    # check room occupation.  set dest to inner room if appropriate.
-    if state[dest] != '.':
-        # outer room space is occupied; unreachable dest
-        return (dest, math.inf)
-    elif state[dest+4] == '.':
-        # inner and outer room unoccupied; set dest to inner
-        dest = dest + 4
-    elif state[dest+4] != amphipod:
-        # room contains an amphipod of another type; unreachable
-        return (dest, math.inf)
-    
-    steps = 0
-    
-    # step to the left as needed
-    while hall_space > hall_dest:
-        if hall_space == 6:
-            steps += 1
-        else:
-            steps += 2
-        hall_space -= 1
-        if state[hall_space] != '.':
-            return (dest, math.inf)
-
-    # step to the right as needed
-    while hall_space < hall_dest:
+    The starting space is in the hall, indexed by hall_space.
+    The ending space is just outside the room of the given room_number.
+    If the path is blocked, then it returns (False, None)."""
+    if hall_space <= room_number + 1:
+        # need to move to the right
+        if not all(c == '.' for c in hall_state[hall_space+1:room_number+2]):
+            return (False, None)
+        steps = (room_number - hall_space) * 2 + 3
         if hall_space == 0:
-            steps += 1
-        else:
-            steps += 2
-        hall_space += 1
-        if state[hall_space] != '.':
-            return (dest, math.inf)
-        
-    # step into room
-    if dest <= 10:
-        steps += 2
+            steps -= 1
     else:
-        steps += 3
-
-    return (dest, steps * STEP_COSTS[amphipod])
-
-
-GOAL_STATE = ".......ABCDABCD"
-
-def amphipod_locations(state: str) -> tuple:
-    """Returns the hall and room locations of amphipods to be organized."""
-    hall_locs = [i for i in range(7) if state[i] != '.']
-    room_locs_1 = [i for i in range(7, 11)
-                   if (state[i] != '.' and
-                       not ((state[i] == GOAL_STATE[i]) and
-                            (state[i+4] == GOAL_STATE[i])))]
-    room_locs_2 = [i for i in range(11, 15)
-                   if state[i] != '.' and state[i] != GOAL_STATE[i]]
-    return hall_locs, room_locs_1 + room_locs_2
+        # need to move to the left
+        if not all(c == '.' for c in hall_state[room_number+2:hall_space]):
+            return (False, None)
+        steps = (hall_space - room_number) * 2 - 3
+        if hall_space == 6:
+            steps -= 1
+    return (True, steps)
 
 
-def move(state: str, i: int, j: int) -> str:
-    """Returns the state obtained by moving an amphipod from i to j."""
-    if i < j:
-        return state[:i] + state[j] + state[i+1:j] + state[i] + state[j+1:]
-    elif j < i:        
-        return state[:j] + state[i] + state[j+1:i] + state[j] + state[i+1:]
-    else:
-        raise ValueError("Tried to move an amphipod to itself.")
+GOAL_STATE_A = State(".......",("AA", "BB", "CC", "DD"))
+GOAL_STATE_B = State(".......",("AAAA", "BBBB", "CCCC", "DDDD"))
 
 
-def min_organize_cost(state: str, _cache = {GOAL_STATE: 0}) -> int:
+def min_organize_cost(s: State, _cache = {GOAL_STATE_A: 0}) -> int:
     """Returns the minimum movement cost to organize from a state."""
-    if state in _cache:
-        return _cache[state]
-    hall_amphipods, room_amphipods = amphipod_locations(state)
+    if s in _cache:
+        return _cache[s]
+    
     min_cost = math.inf
-
-    for h in hall_amphipods:
-        # try moving amphipod at h to its destination
-        dest, move_cost = cost_to_room(state, h)
-        if move_cost >= min_cost:
-            continue
-        trial_state = move(state, h, dest)
-        trial_cost = move_cost + min_organize_cost(trial_state)
+    for new_state, move_cost in all_moves(s):
+        trial_cost = min_organize_cost(new_state) + move_cost
         min_cost = min(min_cost, trial_cost)
 
-    for r in room_amphipods:
-        # try moving amphipod at r to each possible space in the hall.
-        paths = paths_to_hall(state, r)
-        for dest, move_cost in paths:
-            if move_cost >= min_cost:
-                continue
-            trial_state = move(state, r, dest)
-            trial_cost = move_cost + min_organize_cost(trial_state)
-            min_cost = min(min_cost, trial_cost)
-
-    _cache[state] = min_cost
+    _cache[s] = min_cost
     return min_cost
-
 
     
 def part_a(input_data: str) -> int:
     """Given the puzzle input data, return the solution for part A."""
 
-    return "Solution not implemented"
+    s = parse_input_data(input_data)
+    return min_organize_cost(s)
+
 
 
 def part_b(input_data: str) -> int:
