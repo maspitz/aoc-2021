@@ -15,8 +15,8 @@ A room state is a similar string of 2 or 4 characters for part A or B.
 The indices correspond to the map:
 
 #############
-#01.2.3.4.56#   hall state
-###0#1#2#3###   room states
+#01.2.3.4.56#   hall state numbering
+###0#1#2#3###   room state numbering
 #############
 
 There is no advantage to an amphipod's leaving its destination once it has
