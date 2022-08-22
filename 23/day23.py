@@ -45,7 +45,17 @@ def parse_input_data(input_data: str) -> State:
                               p[1]+p[5],
                               p[2]+p[6],
                               p[3]+p[7]))
-            
+
+
+def include_folded_state(s: State, folded: str):
+    """Adds the folded lines to the amphipod state for part B."""
+    folded = ("DD", "CB", "BA", "AC")
+    new_room_states = (rs[0] + fld + rs[1]
+                       for rs, fld in zip(s.room_states, folded))
+    return State(s.hall_state,
+                 new_room_states)
+
+
 DESTINATION_ROOM = {"A": 0, "B": 1, "C": 2, "D": 3}
 ROOM_ASSIGNMENT = "ABCD"
 
