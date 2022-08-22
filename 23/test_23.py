@@ -19,6 +19,6 @@ def test_part_a():
     assert day23.part_a(sample_input_data) == sample_solution_a
 
 
-#def test_part_b():
-#    """Test the solution on sample data for part B."""
-#    assert day23.part_b(sample_input_data) == sample_solution_b
+def test_part_b():
+    """Test the solution on sample data for part B."""
+    assert day23.part_b(sample_input_data) == sample_solution_b
