@@ -2,6 +2,13 @@
 
 import day24
 
+
+"""Usually I just use the sample data and results to make a few tests.
+In the case of day 24, the sample results are not directly relevant to
+the solution of the problem.  Like the other AOC problems, it is just a
+one-off problem and is not meant to be useful for anything else so I will opt
+not to write any tests."""
+
 # Test data given as a multiline string.
 #sample_input_data = """Sample data not entered"""
 #
